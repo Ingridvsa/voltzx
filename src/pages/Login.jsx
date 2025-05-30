@@ -24,7 +24,6 @@ export default function Login({ onLogin }) {
       <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} className="block w-full mb-2 p-2 border" />
       <input type="password" placeholder="Senha" value={password} onChange={(e) => setPassword(e.target.value)} className="block w-full mb-2 p-2 border" />
       <button onClick={handleLogin} className="bg-blue-500 text-white px-4 py-2 rounded">Entrar</button>
-      <div className="mt-2 text-sm text-blue-500 cursor-pointer" onClick={() => alert("Funcionalidade de recuperação de senha em desenvolvimento.")}>Esqueceu a senha?</div>
       <p className="mt-4 text-sm text-center">
         Não tem conta? <Link to="/register" className="text-blue-500 underline">Cadastre-se</Link>
       </p>
