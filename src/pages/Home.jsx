@@ -1,4 +1,5 @@
 import React from "react";
+import logo from "../assets/voltz-x-logo-dark.png";
 import { useNavigate } from "react-router-dom";
 
 export default function Home() {
@@ -8,7 +9,7 @@ export default function Home() {
     <div className="font-sans">
       <header className="flex items-center justify-between px-6 py-4 bg-white shadow">
         <div className="text-2xl font-bold text-yellow-500">
-          <span className="text-black">VOLT</span>Z<span className="text-black">X</span>
+          <img src={logo} alt="Logo VoltzX" className="h-10" />
         </div>
         <nav className="space-x-6 text-sm font-medium text-gray-700">
           <a href="#">Sobre</a>
