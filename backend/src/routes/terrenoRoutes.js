@@ -5,51 +5,55 @@ import { authenticateToken } from "../middlewares/authMiddleware.js";
 const router = express.Router();
 const prisma = new PrismaClient();
 
+// Cadastrar novo terreno (somente proprietário)
 router.post("/", authenticateToken, async (req, res) => {
-  console.log("REQ.USER:", req.user); // mostra o token decodificado
-  console.log("BODY:", req.body);     // mostra os dados enviados
-
-  const { localizacao, preco, tamanho } = req.body;
+  const { pais, estado, cidade, bairro, tamanho } = req.body;
   const userId = req.user?.id;
 
-  if (!userId) {
-    return res.status(400).json({ error: "Usuário não autenticado corretamente." });
+  if (!userId || req.user.role !== "proprietario") {
+    return res.status(403).json({ error: "Apenas proprietários podem cadastrar terrenos." });
   }
 
   try {
     const terreno = await prisma.terreno.create({
       data: {
-        localizacao,
-        preco,
+        pais,
+        estado,
+        cidade,
+        bairro,
         tamanho: Number(tamanho),
         userId,
       },
     });
     res.status(201).json(terreno);
   } catch (err) {
-    console.error("ERRO AO CRIAR TERRENO:", err); // ← mostra erro no terminal
-    res.status(500).json({ error: err.message }); // ← mostra erro real no Insomnia
+    console.error("Erro ao criar terreno:", err);
+    res.status(500).json({ error: err.message });
   }
 });
 
+// Listar terrenos
 router.get("/", authenticateToken, async (req, res) => {
   try {
     let terrenos;
 
     if (req.user.role === "proprietario") {
-      // Proprietário vê só os seus
+      // Proprietário vê apenas os terrenos dele
+      terrenos = await prisma.terreno.findMany({
+        where: { userId: req.user.id },
+      });
+    } else if (req.user.role === "empresa") {
+      // Empresa vê todos os terrenos de usuários com role "proprietario"
       terrenos = await prisma.terreno.findMany({
         where: {
-          userId: req.user.id,
+          user: {
+            role: "proprietario",
+          },
         },
-      });
-    } else if (req.user.role === "empresa" || req.user.role === "investidor") {
-      // Empresas e investidores veem todos
-      terrenos = await prisma.terreno.findMany({
         include: { user: true },
       });
     } else {
-      return res.status(403).json({ error: "Perfil não autorizado" });
+      return res.status(403).json({ error: "Perfil não autorizado." });
     }
 
     res.json(terrenos);

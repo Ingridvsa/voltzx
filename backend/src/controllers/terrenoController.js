@@ -3,17 +3,19 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 export async function criarTerreno(req, res) {
-  const { localizacao, preco, tamanho } = req.body;
+  const { pais, estado, bairro, tamanho } = req.body;
   const userId = req.user.id;
 
   try {
     const terreno = await prisma.terreno.create({
       data: {
-        localizacao,
-        preco,
-        tamanho: Number(tamanho),
-        userId: userId,
-      },
+        pais, estado,
+        cidade,
+        bairro,
+      preco,
+      tamanho: Number(tamanho),
+      userId
+    }
     });
 
     res.status(201).json(terreno);

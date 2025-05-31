@@ -7,23 +7,24 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
-model Terreno {
-  id          Int      @id @default(autoincrement())
-  localizacao String
-  preco       String
-  tamanho     Int
-  userId      Int
-  user        User     @relation(fields: [userId], references: [id])
-  projeto Projeto[]
-}
-
 model Projeto {
   id         Int      @id @default(autoincrement())
   nome       String
   descricao  String
-  terreno    Terreno  @relation(fields: [terrenoId], references: [id])
   terrenoId  Int
+  terreno    Terreno @relation(fields: [terrenoId], references: [id])
+}
+
+model Terreno {
+  id       Int    @id @default(autoincrement())
+  pais     String?   // <- Tornar opcional
+  estado   String?
+  cidade   String?
+  bairro   String?
+  tamanho  Int
+  userId   Int
+  user     User   @relation(fields: [userId], references: [id])
+  projetos Projeto[]
 }
 
 enum Role {
