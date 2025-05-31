@@ -6,6 +6,8 @@ export default function ProprietarioDashboard() {
   const [terreno, setTerreno] = useState({ localizacao: "", preco: "", tamanho: "" });
   const [loading, setLoading] = useState(false);
   const [formAberto, setFormAberto] = useState(false);
+  const [detalheVisivel, setDetalheVisivel] = useState(false);
+  const [terrenoSelecionado, setTerrenoSelecionado] = useState(null);
 
   useEffect(() => {
     async function carregarTerrenos() {
@@ -41,7 +43,8 @@ export default function ProprietarioDashboard() {
   }
 
   function verDetalhes(terreno) {
-    alert(`Detalhes do Terreno:\n\nLocalização: ${terreno.localizacao}\nPreço: ${terreno.preco}\nTamanho: ${terreno.tamanho} m²`);
+    setTerrenoSelecionado(terreno);
+    setDetalheVisivel(true);
   }
 
   return (
@@ -58,6 +61,26 @@ export default function ProprietarioDashboard() {
           </div>
         ))}
       </div>
+
+      {/* Modal de detalhes */}
+      {detalheVisivel && terrenoSelecionado && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded shadow-lg w-full max-w-md">
+            <h3 className="text-xl font-bold mb-4">Detalhes do Terreno</h3>
+            <p><strong>Localização:</strong> {terrenoSelecionado.localizacao}</p>
+            <p><strong>Preço:</strong> {terrenoSelecionado.preco}</p>
+            <p><strong>Tamanho:</strong> {terrenoSelecionado.tamanho} m²</p>
+            <div className="text-right mt-4">
+              <button
+                onClick={() => setDetalheVisivel(false)}
+                className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Botão para abrir o formulário */}
       <div className="bg-gray-300 p-4 text-center mt-auto">
