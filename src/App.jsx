@@ -4,6 +4,10 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
+import ProprietarioDashboard from "./dashboards/ProprietarioDashboard";
+import EmpresaDashboard from "./dashboards/EmpresaDashboard";
+import InvestidorDashboard from "./dashboards/InvestidorDashboard";
+
 
 function App() {
   const [loggedUser, setLoggedUser] = useState(null);
@@ -21,7 +25,11 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login onLogin={setLoggedUser} />} />
-        <Route path="/dashboard" element={<Dashboard userType={loggedUser?.type} />} />
+        <Route path="/dashboard" element={<Dashboard userType={loggedUser?.role} />} />
+        <Route path="/proprietario" element={<ProprietarioDashboard />} />
+        <Route path="/empresa" element={<EmpresaDashboard />} />
+        <Route path="/investidor" element={<InvestidorDashboard />} />
+
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Router>

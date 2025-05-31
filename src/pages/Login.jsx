@@ -1,19 +1,20 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { users } from "../services/userService";
+import { loginUsuario } from "../services/api";
 
 export default function Login({ onLogin }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
-  function handleLogin() {
-    const user = users.find((u) => u.email === email && u.password === password);
-    if (user) {
-      onLogin(user);
-      localStorage.setItem("loggedUser", JSON.stringify(user));
+  async function handleLogin() {
+    try {
+      const data = await loginUsuario({ email, password });
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("loggedUser", JSON.stringify(data.user));
+      onLogin(data.user); // dispara o login global
       navigate("/dashboard");
-    } else {
+    } catch (err) {
       alert("Credenciais inválidas");
     }
   }
