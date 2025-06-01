@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 
 // POST /api/auth/register
 export async function registrar(req, res) {
-  const { email, password, role } = req.body;
+  const { nome, email, password, role } = req.body;
 
   try {
     const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -17,8 +17,9 @@ export async function registrar(req, res) {
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await prisma.user.create({
       data: {
+        nome,
         email,
-        password: hashedPassword,
+        senha: hashedPassword,
         role,
       },
     });
@@ -47,7 +48,7 @@ export async function login(req, res) {
       return res.status(404).json({ error: "Usuário não encontrado" });
     }
 
-    const passwordOk = await bcrypt.compare(password, user.password);
+    const passwordOk = await bcrypt.compare(password, user.senha);
     if (!passwordOk) {
       return res.status(401).json({ error: "Senha inválida" });
     }

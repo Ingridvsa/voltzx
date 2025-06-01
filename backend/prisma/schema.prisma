@@ -8,24 +8,62 @@ datasource db {
 }
 
 model Projeto {
-  id         Int      @id @default(autoincrement())
-  nome       String
-  descricao  String
-  terrenoId  Int
-  terreno    Terreno @relation(fields: [terrenoId], references: [id])
+  id          Int       @id @default(autoincrement())
+  nome        String
+  descricao   String
+
+  terrenoId   Int
+  terreno     Terreno   @relation(fields: [terrenoId], references: [id])
+
+  empresaId   Int
+  empresa     User      @relation("EmpresaProjetos", fields: [empresaId], references: [id])
+
+  ofertas     Oferta[]
+
+  aprovado    Boolean   @default(false)
+  rejeitado   Boolean   @default(false)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
-model Terreno {
-  id       Int    @id @default(autoincrement())
-  pais     String?   // <- Tornar opcional
-  estado   String?
-  cidade   String?
-  bairro   String?
-  tamanho  Int
-  userId   Int
-  user     User   @relation(fields: [userId], references: [id])
-  projetos Projeto[]
+
+
+
+model Oferta {
+  id                   Int      @id @default(autoincrement())
+  projetoId            Int
+  projeto              Projeto  @relation(fields: [projetoId], references: [id])
+
+  investidorId         Int
+  investidor User @relation("UserOfertas", fields: [investidorId], references: [id])
+
+  valor                Float
+  descricao            String
+
+  aceitaEmpresa        Boolean  @default(false)
+  aceitaProprietario   Boolean  @default(false)
+  rejeitadaEmpresa     Boolean  @default(false)
+  rejeitadaProprietario Boolean @default(false)
+
+  criadaEm             DateTime @default(now())
 }
+
+
+
+model Terreno {
+  id        Int       @id @default(autoincrement())
+  pais      String?
+  estado    String?
+  cidade    String?
+  bairro    String?
+  tamanho   Int
+  userId    Int
+
+  user      User      @relation("ProprietarioTerrenos", fields: [userId], references: [id])
+  projetos  Projeto[]
+}
+
 
 enum Role {
   proprietario
@@ -33,13 +71,15 @@ enum Role {
   investidor
 }
 
-model User {
-  id        Int     @id @default(autoincrement())
-  email     String  @unique
-  password  String
-  role      Role
-  createdAt DateTime @default(now())
-  
-  terrenos  Terreno[]
-}
 
+model User {
+  id       Int       @id @default(autoincrement())
+  nome     String
+  email    String    @unique
+  senha    String
+  role     String
+
+  projetos Projeto[] @relation("EmpresaProjetos") // para empresa
+  terrenos Terreno[] @relation("ProprietarioTerrenos") // para proprietário
+  ofertas  Oferta[]  @relation("UserOfertas") // para investidor
+}

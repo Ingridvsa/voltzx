@@ -13,11 +13,19 @@ function App() {
   const [loggedUser, setLoggedUser] = useState(null);
 
   useEffect(() => {
+  try {
     const storedUser = localStorage.getItem("loggedUser");
-    if (storedUser) {
+    if (storedUser && storedUser !== "undefined") {
       setLoggedUser(JSON.parse(storedUser));
     }
-  }, []);
+  } catch (err) {
+    console.error("Erro ao fazer parse do usuário logado:", err);
+    localStorage.removeItem("loggedUser"); // limpa se estiver corrompido
+    setLoggedUser(null);
+  }
+}, []);
+
+
 
   return (
     <Router>

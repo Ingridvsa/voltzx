@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { fetchTerrenos, criarProjeto } from "../services/api";
+import { fetchTerrenos, criarProjeto, getPainelData } from "../services/api";
+
 
 export default function EmpresaDashboard() {
   const [terrenos, setTerrenos] = useState([]);
@@ -15,6 +16,8 @@ export default function EmpresaDashboard() {
   const [modalAberto, setModalAberto] = useState(false);
   const [projetoAtual, setProjetoAtual] = useState({ nome: "", descricao: "" });
   const [detalhesVisiveis, setDetalhesVisiveis] = useState(null);
+  const [painelAberto, setPainelAberto] = useState(false);
+  const [projetosEnviados, setProjetosEnviados] = useState([]);
 
   useEffect(() => {
     carregarTerrenos();
@@ -75,6 +78,19 @@ export default function EmpresaDashboard() {
     }
   };
 
+  async function abrirPainelMonitoramento() {
+  try {
+    const token = localStorage.getItem("token");
+    const res = await getPainelData(token);
+    setProjetosEnviados(res.projetos || []);
+    setPainelAberto(true);
+  } catch (err) {
+    console.error("Erro ao buscar painel:", err);
+    alert("Erro ao carregar painel.");
+  }
+}
+
+
   return (
     <div className="flex flex-col min-h-screen">
       <div className="bg-gray-300 p-4 text-center text-lg font-bold">EMPRESA</div>
@@ -132,8 +148,48 @@ export default function EmpresaDashboard() {
       )}
 
       <div className="bg-gray-300 p-4 text-center mt-auto">
-        painel monitoramento
+        <button
+          className="bg-blue-600 text-white px-4 py-2 rounded"
+          onClick={abrirPainelMonitoramento}
+        >
+            Painel de Monitoramento
+        </button>
       </div>
+      {painelAberto && (
+  <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
+    <div className="bg-white p-6 rounded shadow-lg w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+      <h2 className="text-xl font-bold mb-4 text-center">Projetos Enviados</h2>
+      {projetosEnviados.length === 0 ? (
+        <p className="text-center text-gray-500">Nenhum projeto enviado ainda.</p>
+      ) : (
+        projetosEnviados.map((projeto) => (
+          <div key={projeto.id} className="border-b pb-4 mb-4">
+            <p><strong>Projeto:</strong> {projeto.nome}</p>
+            <p><strong>Descrição:</strong> {projeto.descricao}</p>
+            <p><strong>Terreno:</strong> {projeto.terreno.cidade} - {projeto.terreno.estado} ({projeto.terreno.tamanho}m²)</p>
+            <p><strong>Status:</strong>{" "}
+              {projeto.aprovado
+                ? "Aprovado"
+                : projeto.rejeitado
+                ? "Rejeitado"
+                : "Pendente"}
+            </p>
+          </div>
+        ))
+      )}
+      <div className="text-center mt-4">
+        <button
+          onClick={() => setPainelAberto(false)}
+          className="bg-gray-600 text-white px-4 py-2 rounded"
+        >
+          Fechar
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+
     </div>
   );
 }

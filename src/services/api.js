@@ -1,21 +1,20 @@
 const API_URL = "http://localhost:3000/api/auth";
 
-export async function registrarUsuario({ email, password, role }) {
+export async function registrarUsuario({ nome, email, password, role }) {
   const response = await fetch(`${API_URL}/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password, role }),
+    body: JSON.stringify({ nome, email, password, role }),
   });
 
   if (!response.ok) {
-    const errorData = await response.json();  // Captura a resposta de erro
-    console.error("Erro no registro:", errorData);  // Exibe o erro no console
+    const errorData = await response.json();
+    console.error("Erro no registro:", errorData);
     throw new Error("Erro no registro");
   }
 
   return response.json();
 }
-
 
 export async function loginUsuario({ email, password }) {
   const response = await fetch(`${API_URL}/login`, {
@@ -98,3 +97,24 @@ export async function listarTerrenos(token) {
   return response.json();
 }
 
+export async function getPainelData(token) {
+  const res = await fetch("http://localhost:3000/api/projetos/monitoramento", {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!res.ok) throw new Error("Erro ao carregar painel");
+  return await res.json();
+}
+
+export async function responderProjeto(id, acao, token) {
+  const res = await fetch(`http://localhost:3000/api/projetos/${id}/resposta`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ acao }),
+  });
+
+  if (!res.ok) throw new Error("Erro ao responder projeto");
+  return await res.json();
+}
