@@ -47,17 +47,31 @@ export default function ProprietarioDashboard() {
     }
   }
 
-  const responder = async (projetoId, acao) => {
-  try {
-    const token = localStorage.getItem("token");
-    const resposta = await responderProjeto(projetoId, acao, token);
-    alert(`Projeto ${acao === "aceitar" ? "aceito" : "rejeitado"} com sucesso!`);
-    window.location.reload();
-  } catch (err) {
-    console.error("Erro ao responder projeto:", err);
-    alert("Erro ao responder proposta: " + err.message);
-  }
-};
+  const responder = async (id, acao, tipo) => {
+    try {
+      const token = localStorage.getItem("token");
+
+      if (tipo === "projeto") {
+        await responderProjeto(id, acao, token);
+        alert(`Projeto ${acao === "aceitar" ? "aceito" : "rejeitado"} com sucesso!`);
+      } else if (tipo === "proprietario") {
+        await fetch(`http://localhost:3000/api/projetos/ofertas/${id}/resposta`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ acao, origem: "proprietario" }),
+        });
+        alert(`Oferta ${acao === "aceitar" ? "aceita" : "rejeitada"} com sucesso!`);
+      }
+
+      carregarProjetosRecebidos();
+    } catch (err) {
+      console.error("Erro ao responder:", err);
+      alert("Erro ao responder.");
+    }
+  };
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -114,7 +128,6 @@ export default function ProprietarioDashboard() {
         ))}
       </div>
 
-      {/* Detalhes do terreno */}
       {detalheVisivel && terrenoSelecionado && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white p-6 rounded shadow-lg w-full max-w-md">
@@ -133,7 +146,6 @@ export default function ProprietarioDashboard() {
         </div>
       )}
 
-      {/* Painel de monitoramento (modal) */}
       {painelAberto && (
         <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
           <div className="bg-white p-6 rounded shadow-lg w-full max-w-2xl max-h-[80vh] overflow-y-auto">
@@ -150,24 +162,62 @@ export default function ProprietarioDashboard() {
                     {projeto.aprovado
                       ? "Aprovado"
                       : projeto.rejeitado
-                      ? "Rejeitado"
-                      : "Pendente"}
+                        ? "Rejeitado"
+                        : "Pendente"}
                   </p>
 
                   {!projeto.aprovado && !projeto.rejeitado && (
                     <div className="flex gap-2 mt-2">
                       <button
-                        onClick={() => responder(projeto.id, "aceitar")}
+                        onClick={() => responder(projeto.id, "aceitar", "projeto")}
                         className="bg-green-500 text-white px-3 py-1 rounded"
                       >
                         Aceitar
                       </button>
                       <button
-                        onClick={() => responder(projeto.id, "rejeitar")}
+                        onClick={() => responder(projeto.id, "rejeitar", "projeto")}
                         className="bg-red-500 text-white px-3 py-1 rounded"
                       >
                         Rejeitar
                       </button>
+                    </div>
+                  )}
+
+                  {/* Ofertas */}
+                  {projeto.ofertas && projeto.ofertas.length > 0 && (
+                    <div className="mt-4">
+                      <p className="font-semibold">Ofertas de Investimento:</p>
+                      {projeto.ofertas.map((oferta) => (
+                        <div key={oferta.id} className="border mt-2 p-2 rounded bg-gray-100">
+                          <p><strong>Valor:</strong> R$ {oferta.valor.toFixed(2)}</p>
+                          <p><strong>Descrição:</strong> {oferta.descricao}</p>
+                          <p><strong>Investidor:</strong> {oferta.investidor.nome} ({oferta.investidor.email})</p>
+                          <p><strong>Status:</strong> {
+                            oferta.aceitaEmpresa && oferta.aceitaProprietario
+                              ? "Aceita por ambos"
+                              : oferta.rejeitadaEmpresa || oferta.rejeitadaProprietario
+                                ? "Rejeitada"
+                                : "Pendente"
+                          }</p>
+
+                          {!oferta.aceitaProprietario && !oferta.rejeitadaProprietario && (
+                            <div className="flex gap-2 mt-2">
+                              <button
+                                onClick={() => responder(oferta.id, "aceitar", "proprietario")}
+                                className="bg-green-600 text-white px-3 py-1 rounded"
+                              >
+                                Aceitar
+                              </button>
+                              <button
+                                onClick={() => responder(oferta.id, "rejeitar", "proprietario")}
+                                className="bg-red-600 text-white px-3 py-1 rounded"
+                              >
+                                Rejeitar
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
@@ -185,7 +235,6 @@ export default function ProprietarioDashboard() {
         </div>
       )}
 
-      {/* Formulário de novo terreno */}
       <div className="bg-gray-300 p-4 text-center mt-auto">
         <button
           className="bg-green-600 text-white px-4 py-2 rounded"

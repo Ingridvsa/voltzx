@@ -118,3 +118,67 @@ export async function responderProjeto(id, acao, token) {
   if (!res.ok) throw new Error("Erro ao responder projeto");
   return await res.json();
 }
+
+export async function getProjetosDisponiveis(token) {
+  const res = await fetch("http://localhost:3000/api/projetos/disponiveis", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("Erro ao buscar projetos disponíveis");
+  return await res.json();
+}
+
+
+export async function criarOferta(data, token) {
+  const response = await fetch("http://localhost:3000/api/ofertas", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) throw new Error("Erro ao enviar oferta");
+  return await response.json();
+}
+
+export async function getOfertasAceitas(token) {
+  const res = await fetch("http://localhost:3000/api/projetos/ofertas-aceitas", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) throw new Error("Erro ao buscar ofertas aceitas");
+  return await res.json();
+}
+
+export async function getMinhasOfertas(token) {
+  const response = await fetch("http://localhost:3000/api/ofertas/minhas", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json"
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error("Erro ao buscar ofertas do investidor");
+  }
+
+  return response.json();
+}
+
+export async function responderOferta(ofertaId, acao, token, origem) {
+  const res = await fetch(`http://localhost:3000/api/projetos/ofertas/${ofertaId}/resposta`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ acao, origem }),
+  });
+
+  if (!res.ok) throw new Error("Erro ao responder oferta");
+  return await res.json();
+}
+

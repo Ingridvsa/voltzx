@@ -79,16 +79,36 @@ export default function EmpresaDashboard() {
   };
 
   async function abrirPainelMonitoramento() {
-  try {
-    const token = localStorage.getItem("token");
-    const res = await getPainelData(token);
-    setProjetosEnviados(res.projetos || []);
-    setPainelAberto(true);
-  } catch (err) {
-    console.error("Erro ao buscar painel:", err);
-    alert("Erro ao carregar painel.");
+    try {
+      const token = localStorage.getItem("token");
+      const res = await getPainelData(token);
+      setProjetosEnviados(res.projetos || []);
+      setPainelAberto(true);
+    } catch (err) {
+      console.error("Erro ao buscar painel:", err);
+      alert("Erro ao carregar painel.");
+    }
   }
-}
+
+  const responderOfertaClick = async (ofertaId, resposta) => {
+    try {
+      const token = localStorage.getItem("token");
+      await fetch(`http://localhost:3000/api/projetos/ofertas/${ofertaId}/resposta`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ acao: resposta, origem: "empresa" }),
+      });
+
+      alert(`Oferta ${resposta === "aceitar" ? "aceita" : "rejeitada"} com sucesso!`);
+      abrirPainelMonitoramento(); // atualiza
+    } catch (err) {
+      console.error("Erro ao responder oferta:", err);
+      alert("Erro ao responder oferta.");
+    }
+  };
 
 
   return (
@@ -152,44 +172,74 @@ export default function EmpresaDashboard() {
           className="bg-blue-600 text-white px-4 py-2 rounded"
           onClick={abrirPainelMonitoramento}
         >
-            Painel de Monitoramento
+          Painel de Monitoramento
         </button>
       </div>
+
       {painelAberto && (
-  <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
-    <div className="bg-white p-6 rounded shadow-lg w-full max-w-2xl max-h-[80vh] overflow-y-auto">
-      <h2 className="text-xl font-bold mb-4 text-center">Projetos Enviados</h2>
-      {projetosEnviados.length === 0 ? (
-        <p className="text-center text-gray-500">Nenhum projeto enviado ainda.</p>
-      ) : (
-        projetosEnviados.map((projeto) => (
-          <div key={projeto.id} className="border-b pb-4 mb-4">
-            <p><strong>Projeto:</strong> {projeto.nome}</p>
-            <p><strong>Descrição:</strong> {projeto.descricao}</p>
-            <p><strong>Terreno:</strong> {projeto.terreno.cidade} - {projeto.terreno.estado} ({projeto.terreno.tamanho}m²)</p>
-            <p><strong>Status:</strong>{" "}
-              {projeto.aprovado
-                ? "Aprovado"
-                : projeto.rejeitado
-                ? "Rejeitado"
-                : "Pendente"}
-            </p>
+        <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded shadow-lg w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+            <h2 className="text-xl font-bold mb-4 text-center">Projetos Enviados</h2>
+            {projetosEnviados.length === 0 ? (
+              <p className="text-center text-gray-500">Nenhum projeto enviado ainda.</p>
+            ) : (
+              projetosEnviados.map((projeto) => (
+                <div key={projeto.id} className="border-b pb-4 mb-4">
+                  <p><strong>Projeto:</strong> {projeto.nome}</p>
+                  <p><strong>Descrição:</strong> {projeto.descricao}</p>
+                  <p><strong>Terreno:</strong> {projeto.terreno.cidade} - {projeto.terreno.estado} ({projeto.terreno.tamanho}m²)</p>
+                  <p><strong>Status:</strong>{" "}
+                    {projeto.aprovado
+                      ? "Aprovado"
+                      : projeto.rejeitado
+                        ? "Rejeitado"
+                        : "Pendente"}
+                  </p>
+
+                  {projeto.ofertas && projeto.ofertas.length > 0 && (
+                    <div className="mt-4">
+                      <p className="font-semibold">Ofertas de Investimento:</p>
+                      {projeto.ofertas.map((oferta) => (
+                        <div key={oferta.id} className="border mt-2 p-2 rounded bg-gray-100">
+                          <p><strong>Valor:</strong> R$ {oferta.valor.toFixed(2)}</p>
+                          <p><strong>Descrição:</strong> {oferta.descricao}</p>
+                          <p><strong>Investidor:</strong> {oferta.investidor.nome} ({oferta.investidor.email})</p>
+                          <p><strong>Status:</strong> {
+                            oferta.aceitaEmpresa && oferta.aceitaProprietario
+                              ? "Aceita por ambos"
+                              : oferta.rejeitadaEmpresa || oferta.rejeitadaProprietario
+                                ? "Rejeitada"
+                                : "Pendente"
+                          }</p>
+
+                          {!oferta.aceitaEmpresa && !oferta.rejeitadaEmpresa && (
+                            <div className="flex gap-2 mt-2">
+                              <button onClick={() => responderOfertaClick(oferta.id, "aceitar")} className="bg-green-600 text-white px-3 py-1 rounded">
+                                Aceitar
+                              </button>
+                              <button onClick={() => responderOfertaClick(oferta.id, "rejeitar")} className="bg-red-600 text-white px-3 py-1 rounded">
+                                Rejeitar
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+            <div className="text-center mt-4">
+              <button
+                onClick={() => setPainelAberto(false)}
+                className="bg-gray-600 text-white px-4 py-2 rounded"
+              >
+                Fechar
+              </button>
+            </div>
           </div>
-        ))
+        </div>
       )}
-      <div className="text-center mt-4">
-        <button
-          onClick={() => setPainelAberto(false)}
-          className="bg-gray-600 text-white px-4 py-2 rounded"
-        >
-          Fechar
-        </button>
-      </div>
     </div>
-  </div>
-)}
-
-
-    </div>
-  );
+  )
 }

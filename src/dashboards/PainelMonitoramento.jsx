@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { getPainelData, responderProjeto } from "../services/api";
+import { getPainelData, responderProjeto, responderOferta } from "../services/api";
 
 export default function PainelMonitoramento() {
   const [projetos, setProjetos] = useState([]);
@@ -23,51 +23,30 @@ export default function PainelMonitoramento() {
     carregarPainel();
   }, []);
 
-  router.post("/:id/resposta", authenticateToken, async (req, res) => {
-  const projetoId = parseInt(req.params.id);
-  const { acao } = req.body;
+  const responder = async (projetoId, acao) => {
+    try {
+      const token = localStorage.getItem("token");
+      await responderProjeto(projetoId, acao, token);
+      alert(`Projeto ${acao === "aceitar" ? "aceito" : "rejeitado"} com sucesso!`);
+      window.location.reload();
+    } catch (err) {
+      console.error("Erro ao responder projeto:", err);
+      alert("Erro ao responder proposta.");
+    }
+  };
 
-  console.log("Requisição recebida:", { projetoId, acao, user: req.user });
-
-  if (!["aceitar", "rejeitar"].includes(acao)) {
-    return res.status(400).json({ error: "Ação inválida" });
-  }
-
+  const responderOfertaClick = async (ofertaId, resposta) => {
   try {
-    const projeto = await prisma.projeto.findUnique({
-      where: { id: projetoId },
-      include: { terreno: true }
-    });
-
-    if (!projeto) {
-      console.log("Projeto não encontrado");
-      return res.status(404).json({ error: "Projeto não encontrado" });
-    }
-
-    // Verifica se é o proprietário
-    if (projeto.terreno.userId !== req.user.id || req.user.role !== "proprietario") {
-      console.log("Acesso negado", {
-        projetoUserId: projeto.terreno.userId,
-        currentUserId: req.user.id,
-        role: req.user.role
-      });
-      return res.status(403).json({ error: "Acesso negado" });
-    }
-
-    const projetoAtualizado = await prisma.projeto.update({
-      where: { id: projetoId },
-      data: {
-        aprovado: acao === "aceitar",
-        rejeitado: acao === "rejeitar",
-      },
-    });
-
-    res.json(projetoAtualizado);
-  } catch (error) {
-    console.error("Erro ao responder projeto:", error); // <-- Aqui vem o erro exato
-    res.status(500).json({ error: "Erro ao responder projeto" });
+    const token = localStorage.getItem("token");
+    const origem = usuario?.role; // vai ser "empresa" ou "proprietario"
+    await responderOferta(ofertaId, resposta, token, origem);
+    alert(`Oferta ${resposta === "aceitar" ? "aceita" : "rejeitada"} com sucesso!`);
+    window.location.reload();
+  } catch (err) {
+    console.error("Erro ao responder oferta:", err);
+    alert("Erro ao responder oferta.");
   }
-});
+};
 
 
   if (status === "carregando") return <p className="text-center">Carregando...</p>;
@@ -113,6 +92,40 @@ export default function PainelMonitoramento() {
                 <button onClick={() => responder(projeto.id, "rejeitar")} className="bg-red-500 text-white px-4 py-2 rounded">
                   Rejeitar Projeto
                 </button>
+              </div>
+            )}
+
+            {/* Ofertas */}
+            {projeto.ofertas && projeto.ofertas.length > 0 && (
+              <div className="mt-6">
+                <h4 className="font-semibold mb-2">Ofertas de Investimento</h4>
+                {projeto.ofertas.map((oferta) => (
+                  <div key={oferta.id} className="border p-3 rounded mb-2">
+                    <p><strong>Valor:</strong> R$ {oferta.valor.toFixed(2)}</p>
+                    <p><strong>Descrição:</strong> {oferta.descricao}</p>
+                    <p><strong>Investidor:</strong> {oferta.investidor.nome} ({oferta.investidor.email})</p>
+                    <p><strong>Status:</strong> {
+                      oferta.aceitaEmpresa && oferta.aceitaProprietario
+                        ? "Aceita por ambos"
+                        : oferta.rejeitadaEmpresa || oferta.rejeitadaProprietario
+                          ? "Rejeitada"
+                          : "Pendente"
+                    }</p>
+
+                    {(usuario.role === "empresa" && !oferta.aceitaEmpresa && !oferta.rejeitadaEmpresa) && (
+                      <div className="flex gap-2 mt-2">
+                        <button onClick={() => responderOfertaClick(oferta.id, "aceitar")} className="bg-green-600 text-white px-3 py-1 rounded">Aceitar</button>
+                        <button onClick={() => responderOfertaClick(oferta.id, "rejeitar")} className="bg-red-600 text-white px-3 py-1 rounded">Rejeitar</button>
+                      </div>
+                    )}
+                    {(usuario.role === "proprietario" && !oferta.aceitaProprietario && !oferta.rejeitadaProprietario) && (
+                      <div className="flex gap-2 mt-2">
+                        <button onClick={() => responderOfertaClick(oferta.id, "aceitar")} className="bg-green-600 text-white px-3 py-1 rounded">Aceitar</button>
+                        <button onClick={() => responderOfertaClick(oferta.id, "rejeitar")} className="bg-red-600 text-white px-3 py-1 rounded">Rejeitar</button>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             )}
           </div>
